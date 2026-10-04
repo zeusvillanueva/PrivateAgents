@@ -1,0 +1,9 @@
+[project]
+name = "private-agent"
+version = "0.1.0"
+requires-python = ">=3.12"
+dependencies = [
+    "agent-framework-foundry==1.14.0",
+    "agent-framework-foundry-hosting==1.0.0b261002",
+    "azure-identity==1.26.0",
+]
