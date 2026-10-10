@@ -25,5 +25,5 @@ Generated files come back as file annotations in the response; the chat app shou
 ## Deploy
 Build each Dockerfile from the repo root (`docker build -f agents/<name>/Dockerfile .`), push to ACR, and register as a
 hosted agent in your Foundry project (e.g. `azd ai agent` / portal). Grant the agent identity "Azure AI User" on the
-project and AcrPull on the registry. Hosted agents are in preview; confirm current deploy steps in the Foundry docs.
+project and AcrPull on the registry (the platform grants AcrPull to the project identity; see [infrastructure](infrastructure.md)). Hosted agents are in preview; confirm current deploy steps in the Foundry docs.
 See [infrastructure](infrastructure.md) for the shared platform resources this depends on.
