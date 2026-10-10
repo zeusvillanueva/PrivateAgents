@@ -1,0 +1,44 @@
+name: build-agents
+
+on:
+  push:
+    branches: [main]
+    paths: ['agents/**', 'shared/**', 'requirements.txt', '.github/workflows/build-agents.yml']
+  workflow_dispatch:
+
+permissions:
+  id-token: write
+  contents: read
+
+jobs:
+  test:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with: { python-version: '3.12' }
+      - run: pip install --pre -r requirements.txt pytest
+      - run: PYTHONPATH=. pytest tests
+
+  build:
+    needs: test
+    runs-on: ubuntu-latest
+    # Environment secrets: AZURE_CLIENT_ID, AZURE_TENANT_ID, AZURE_SUBSCRIPTION_ID.
+    # Environment variable: ACR_NAME (platform output `acrName`).
+    environment: poc
+    strategy:
+      matrix:
+        agent: [assistant, analyst]
+    steps:
+      - uses: actions/checkout@v4
+      - uses: azure/login@v2
+        with:
+          client-id: ${{ secrets.AZURE_CLIENT_ID }}
+          tenant-id: ${{ secrets.AZURE_TENANT_ID }}
+          subscription-id: ${{ secrets.AZURE_SUBSCRIPTION_ID }}
+      - name: Build and push to platform ACR
+        run: |
+          az acr build -r "${{ vars.ACR_NAME }}" \
+            -t "${{ matrix.agent }}-agent:${{ github.sha }}" \
+            -t "${{ matrix.agent }}-agent:latest" \
+            -f "agents/${{ matrix.agent }}/Dockerfile" .
