@@ -18,6 +18,9 @@ App-specific, not in the platform: agent code, Dockerfiles, `build-agents.yml` w
 2. Create an Entra app registration with federated credential `repo:zeusvillanueva/PrivateAgents:environment:poc`;
    add its object ID to the platform `appIdentities` with roles `['foundry', 'acr']` and redeploy.
 3. In this repo create GitHub environment `poc` with secrets `AZURE_CLIENT_ID`, `AZURE_TENANT_ID`,
-   `AZURE_SUBSCRIPTION_ID` and variable `ACR_NAME`.
+   `AZURE_SUBSCRIPTION_ID` and variables `ACR_NAME`, `ACR_LOGIN_SERVER`, `AZURE_AI_PROJECT_ENDPOINT`,
+   `AZURE_AI_MODEL_DEPLOYMENT_NAME` (platform outputs / `foundryDeployments`).
 4. Push to `main`: the workflow tests and builds `assistant-agent` / `analyst-agent` into the ACR.
-5. Register the images as hosted agents in the Foundry project (see [README](README.md#deploy)).
+5. The `register` job then creates a hosted agent version per image in the Foundry project
+   (`scripts/register_agents.py`; the CI identity needs "Azure AI User" on the project, via platform role `foundry`).
+   Agent names (`assistant-agent`, `analyst-agent`) must match what the chat app calls.

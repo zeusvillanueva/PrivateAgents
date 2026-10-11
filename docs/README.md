@@ -23,7 +23,9 @@ Generated files come back as file annotations in the response; the chat app shou
     PYTHONPATH=. pytest tests
 
 ## Deploy
-Build each Dockerfile from the repo root (`docker build -f agents/<name>/Dockerfile .`), push to ACR, and register as a
-hosted agent in your Foundry project (e.g. `azd ai agent` / portal). Grant the agent identity "Azure AI User" on the
-project and AcrPull on the registry (the platform grants AcrPull to the project identity; see [infrastructure](infrastructure.md)). Hosted agents are in preview; confirm current deploy steps in the Foundry docs.
+Pushes to `main` run `.github/workflows/build-agents.yml`: test, build/push images to ACR, then register a hosted agent
+version per image with `python scripts/register_agents.py` (also runnable locally after `az login`, with the `.env.example`
+vars plus `ACR_LOGIN_SERVER` and optional `IMAGE_TAG`). Hosted agents are in preview; the project identity needs AcrPull
+(granted by the platform) and the runtime identity "Azure AI User" on the project. The script's protocol version
+(`responses` / `1.0.0`) and cpu/memory are defaults; confirm against current Foundry docs on first deploy.
 See [infrastructure](infrastructure.md) for the shared platform resources this depends on.
