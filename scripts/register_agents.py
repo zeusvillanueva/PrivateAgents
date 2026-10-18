@@ -14,7 +14,11 @@ from azure.ai.projects.models import (
 )
 from azure.identity import DefaultAzureCredential
 
-AGENTS = ["assistant", "analyst"]
+DESCRIPTIONS = {
+    "assistant": "Answers questions using uploaded documents (file search), or general knowledge when none are provided.",
+    "analyst": "Analyses uploaded datasets with code interpreter and generates charts, PDFs and Office documents.",
+}
+AGENTS = list(DESCRIPTIONS)
 
 
 def main(names: list[str]) -> None:
@@ -28,6 +32,7 @@ def main(names: list[str]) -> None:
         agent_name = f"{name}-agent"
         version = client.agents.create_version(
             agent_name,
+            description=DESCRIPTIONS[name],
             definition=HostedAgentDefinition(
                 cpu="1",
                 memory="2Gi",
