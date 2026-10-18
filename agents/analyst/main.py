@@ -4,6 +4,7 @@ from agent_framework import Agent
 
 from shared.attachments import Attachments, AttachmentToolsMiddleware
 from shared.config import make_client
+from shared.generated_files import GeneratedFilesMiddleware
 
 INSTRUCTIONS = """You are a data analyst. Use the code interpreter to analyse uploaded datasets.
 - Inspect the data first (shape, columns, types, missing values) and state assumptions.
@@ -11,6 +12,8 @@ INSTRUCTIONS = """You are a data analyst. Use the code interpreter to analyse up
 - When asked for charts, save them as PNG files. For reports, produce PDF (reportlab/matplotlib),
   Word (python-docx), Excel (openpyxl) or PowerPoint (python-pptx) files as requested, saved to disk
   so they are returned as downloadable files.
+- Never write file links or paths (such as sandbox: links) in your reply; saved files are attached to the
+  reply automatically. Just say what you created.
 - If no dataset is uploaded and one is needed, ask the user to upload it."""
 
 client = make_client("analyst-agent")
@@ -25,7 +28,7 @@ agent = Agent(
     name="analyst-agent",
     description="Analyses uploaded datasets with code interpreter and generates charts and documents.",
     instructions=INSTRUCTIONS,
-    middleware=[AttachmentToolsMiddleware(build_tools)],
+    middleware=[AttachmentToolsMiddleware(build_tools), GeneratedFilesMiddleware(client)],
 )
 
 if __name__ == "__main__":
