@@ -13,7 +13,10 @@ The chat app uploads files to Foundry (Files API / vector store) and prepends to
     <attachments>{"vector_store_ids": ["vs_123"], "file_ids": ["file-abc"]}</attachments>
 
 Assistant uses `vector_store_ids`; Analyst uses `file_ids`. IDs are validated and the block is stripped before the model sees it.
-Generated files come back as file annotations in the response; the chat app should proxy-download them.
+Generated files: the hosted agent server drops file annotations, so the analyst's `GeneratedFilesMiddleware`
+(`shared/generated_files.py`) downloads each file from the code interpreter container and appends it to the reply as
+markdown with a base64 data URI (`![name](data:image/png;...)` for images, `[Download name](data:...)` otherwise; 5 MB cap).
+The chat app must render markdown images and allow `data:` URIs.
 
 ## Run locally
     python -m venv .venv && . .venv/bin/activate
