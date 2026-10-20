@@ -24,3 +24,9 @@ def test_tool_returns_link(monkeypatch):
 def test_tool_error_is_reported():
     out = asyncio.run(documents._finish(documents.build_word, "a", ".docx", "T", [{"table": 5, "bullets": 3}]))
     assert out.startswith("Could not create")
+
+
+def test_tools_invoke_with_validated_arguments(monkeypatch):
+    monkeypatch.delenv("STORAGE_ACCOUNT_URL", raising=False)
+    out = asyncio.run(documents.create_word.invoke(arguments={"title": "T", "sections": SECTIONS}))
+    assert "Download report.docx" in out[0].text
