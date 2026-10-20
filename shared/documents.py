@@ -7,8 +7,6 @@ Section shape (Word/PDF/PowerPoint): {"heading": str, "text": str, "bullets": [s
 where the first table row is the header.
 """
 
-from __future__ import annotations
-
 import io
 from typing import Annotated, Any
 
