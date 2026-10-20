@@ -21,6 +21,8 @@ and the chat app). Without it, files are embedded as base64 `data:` URIs, which 
 Requirements: the agent's instance identity needs Storage Blob Data Contributor on the container and Storage Blob Delegator
 on the storage account (platform resources; see [infrastructure](infrastructure.md)).
 
+See [chat-app-integration](chat-app-integration.md) for what the chat app needs to load and use these agents.
+
 ## Run locally
     python -m venv .venv && . .venv/bin/activate
     pip install --pre -r requirements.txt pytest
