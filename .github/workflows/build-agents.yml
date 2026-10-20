@@ -5,6 +5,14 @@ on:
     branches: [main]
     paths: ['agents/**', 'shared/**', 'requirements.txt', '.github/workflows/build-agents.yml']
   workflow_dispatch:
+    inputs:
+      environment:
+        description: Target environment
+        type: choice
+        options:
+          - development
+          - production
+        default: development
 
 permissions:
   id-token: write
@@ -26,7 +34,7 @@ jobs:
     # Environment secrets: AZURE_CLIENT_ID, AZURE_TENANT_ID, AZURE_SUBSCRIPTION_ID.
     # Environment variables: ACR_NAME, ACR_LOGIN_SERVER, AZURE_AI_PROJECT_ENDPOINT,
     # AZURE_AI_MODEL_DEPLOYMENT_NAME (platform outputs `acrName`, `acrLoginServer`, `foundryProjectEndpoint`).
-    environment: development
+    environment: ${{ inputs.environment || 'development' }}
     strategy:
       matrix:
         agent: [assistant, analyst]
@@ -47,7 +55,7 @@ jobs:
   register:
     needs: build
     runs-on: ubuntu-latest
-    environment: development
+    environment: ${{ inputs.environment || 'development' }}
     steps:
       - uses: actions/checkout@v4
       - uses: actions/setup-python@v5
