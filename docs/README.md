@@ -15,8 +15,11 @@ The chat app uploads files to Foundry (Files API / vector store) and prepends to
 Assistant uses `vector_store_ids`; Analyst uses `file_ids`. IDs are validated and the block is stripped before the model sees it.
 Generated files: the hosted agent server drops file annotations, so the analyst's `GeneratedFilesMiddleware`
 (`shared/generated_files.py`) downloads each file from the code interpreter container and appends it to the reply as
-markdown with a base64 data URI (`![name](data:image/png;...)` for images, `[Download name](data:...)` otherwise; 5 MB cap).
-The chat app must render markdown images and allow `data:` URIs.
+markdown (`![name](url)` for images, `[Download name](url)` otherwise; 5 MB cap). With `STORAGE_ACCOUNT_URL` set the file is
+uploaded to the `agent-files` container and linked with a 7-day user-delegation SAS URL (works in the Foundry playground
+and the chat app). Without it, files are embedded as base64 `data:` URIs, which the playground will not render.
+Requirements: the agent's instance identity needs Storage Blob Data Contributor on the container and Storage Blob Delegator
+on the storage account (platform resources; see [infrastructure](infrastructure.md)).
 
 ## Run locally
     python -m venv .venv && . .venv/bin/activate

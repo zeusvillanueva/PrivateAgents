@@ -2,15 +2,24 @@
 
 The hosted agent server drops file annotations, so the chat app only sees a dead
 `sandbox:/mnt/data/...` link. This middleware downloads each generated file from the
-code interpreter container and appends it to the reply as markdown with a data URI
-(an image for images, a download link for everything else).
+code interpreter container and appends it to the reply as markdown (an image for images,
+a download link for everything else).
+
+If STORAGE_ACCOUNT_URL is set, files are uploaded to blob storage (container
+GENERATED_FILES_CONTAINER, default `agent-files`) and linked with a 7-day user-delegation SAS URL,
+which renders in any client. Otherwise they are embedded as base64 data URIs, which some clients
+(e.g. the Foundry playground) refuse to render.
 """
 
 from __future__ import annotations
 
 import base64
 import mimetypes
+import os
 import re
+import uuid
+from urllib.parse import quote
+from datetime import datetime, timedelta, timezone
 from typing import Any
 
 from agent_framework import AgentContext, AgentMiddleware, Content
@@ -32,6 +41,33 @@ def _citations(content: Any) -> list[tuple[str, str, str]]:
     return found
 
 
+async def _upload(data: bytes, name: str, mime: str) -> str:
+    from azure.identity.aio import DefaultAzureCredential
+    from azure.storage.blob import BlobSasPermissions, ContentSettings, generate_blob_sas
+    from azure.storage.blob.aio import BlobServiceClient
+
+    account_url = os.environ["STORAGE_ACCOUNT_URL"].rstrip("/")
+    container = os.environ.get("GENERATED_FILES_CONTAINER", "agent-files")
+    blob_name = f"{uuid.uuid4().hex}/{name}"
+    async with DefaultAzureCredential() as credential, BlobServiceClient(account_url, credential=credential) as service:
+        start = datetime.now(timezone.utc) - timedelta(minutes=5)
+        expiry = start + timedelta(days=7)
+        key = await service.get_user_delegation_key(start, expiry)
+        await service.get_blob_client(container, blob_name).upload_blob(
+            data, content_settings=ContentSettings(content_type=mime)
+        )
+        sas = generate_blob_sas(
+            service.account_name,
+            container,
+            blob_name,
+            user_delegation_key=key,
+            permission=BlobSasPermissions(read=True),
+            start=start,
+            expiry=expiry,
+        )
+    return f"{account_url}/{container}/{quote(blob_name)}?{sas}"
+
+
 async def _markdown(openai_client: Any, container_id: str, file_id: str, filename: str) -> str:
     name = _SAFE_NAME.sub("_", filename.rsplit("/", 1)[-1]) or file_id
     try:
@@ -42,7 +78,13 @@ async def _markdown(openai_client: Any, container_id: str, file_id: str, filenam
     if len(data) > MAX_BYTES:
         return f"\n\n(Generated file {name} is too large to return inline.)"
     mime = mimetypes.guess_type(name)[0] or "application/octet-stream"
-    uri = f"data:{mime};base64,{base64.b64encode(data).decode()}"
+    if os.environ.get("STORAGE_ACCOUNT_URL"):
+        try:
+            uri = await _upload(data, name, mime)
+        except Exception as exc:
+            return f"\n\n(Could not store generated file {name}: {type(exc).__name__})"
+    else:
+        uri = f"data:{mime};base64,{base64.b64encode(data).decode()}"
     if mime.startswith("image/"):
         return f"\n\n![{name}]({uri})"
     return f"\n\n[Download {name}]({uri})"
