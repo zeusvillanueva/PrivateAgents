@@ -63,5 +63,6 @@ jobs:
           AZURE_AI_PROJECT_ENDPOINT: ${{ vars.AZURE_AI_PROJECT_ENDPOINT }}
           AZURE_AI_MODEL_DEPLOYMENT_NAME: ${{ vars.AZURE_AI_MODEL_DEPLOYMENT_NAME }}
           ACR_LOGIN_SERVER: ${{ vars.ACR_LOGIN_SERVER }}
+          STORAGE_ACCOUNT_URL: ${{ vars.STORAGE_ACCOUNT_URL }}
           IMAGE_TAG: ${{ github.sha }}
         run: python scripts/register_agents.py
