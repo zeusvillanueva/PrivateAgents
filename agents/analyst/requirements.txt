@@ -2,3 +2,7 @@ azure-ai-agentserver-agentframework>=1.0.0b17
 agent-framework-azure-ai>=1.0.0rc3
 azure-identity
 azure-storage-blob
+python-docx
+python-pptx
+reportlab
+openpyxl

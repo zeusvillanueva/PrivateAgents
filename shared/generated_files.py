@@ -14,6 +14,7 @@ which renders in any client. Otherwise they are embedded as base64 data URIs, wh
 from __future__ import annotations
 
 import base64
+import logging
 import mimetypes
 import os
 import re
@@ -24,12 +25,21 @@ from typing import Any
 
 from agent_framework import AgentContext, AgentMiddleware, Content
 
-MAX_BYTES = 5 * 1024 * 1024
+logger = logging.getLogger(__name__)
+MAX_BYTES = 25 * 1024 * 1024
+_MIME = {
+    ".docx": "application/vnd.openxmlformats-officedocument.wordprocessingml.document",
+    ".pptx": "application/vnd.openxmlformats-officedocument.presentationml.presentation",
+    ".xlsx": "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
+    ".pdf": "application/pdf",
+    ".csv": "text/csv",
+}
 _SAFE_NAME = re.compile(r"[^A-Za-z0-9._ -]")
 
 
 def _citations(content: Any) -> list[tuple[str, str, str]]:
     found = []
+    logger.debug("content type=%s", getattr(content, "type", None))
     raw = getattr(getattr(content, "raw_representation", None), "annotation", None)
     if getattr(content, "type", None) == "hosted_file" and getattr(raw, "container_id", None):
         found.append((raw.container_id, raw.file_id, getattr(raw, "filename", None) or raw.file_id))
@@ -54,7 +64,10 @@ async def _upload(data: bytes, name: str, mime: str) -> str:
         expiry = start + timedelta(days=7)
         key = await service.get_user_delegation_key(start, expiry)
         await service.get_blob_client(container, blob_name).upload_blob(
-            data, content_settings=ContentSettings(content_type=mime)
+            data,
+            content_settings=ContentSettings(
+                content_type=mime, content_disposition=f'attachment; filename="{name}"'
+            ),
         )
         sas = generate_blob_sas(
             service.account_name,
@@ -68,26 +81,44 @@ async def _upload(data: bytes, name: str, mime: str) -> str:
     return f"{account_url}/{container}/{quote(blob_name)}?{sas}"
 
 
-async def _markdown(openai_client: Any, container_id: str, file_id: str, filename: str) -> str:
-    name = _SAFE_NAME.sub("_", filename.rsplit("/", 1)[-1]) or file_id
-    try:
-        response = await openai_client.containers.files.content.retrieve(file_id, container_id=container_id)
-        data = await response.aread()
-    except Exception as exc:  # keep the reply usable if the download fails
-        return f"\n\n(Could not retrieve generated file {name}: {type(exc).__name__})"
+def mime_for(name: str) -> str:
+    ext = os.path.splitext(name)[1].lower()
+    return _MIME.get(ext) or mimetypes.guess_type(name)[0] or "application/octet-stream"
+
+
+def safe_name(filename: str, fallback: str = "file") -> str:
+    name = _SAFE_NAME.sub("_", filename.replace("\\", "/").rsplit("/", 1)[-1]).strip(" .")
+    return name or fallback
+
+
+async def store_file(data: bytes, name: str) -> str:
+    """Store bytes and return markdown (image or download link) for the reply."""
+    name = safe_name(name)
     if len(data) > MAX_BYTES:
-        return f"\n\n(Generated file {name} is too large to return inline.)"
-    mime = mimetypes.guess_type(name)[0] or "application/octet-stream"
+        return f"(Generated file {name} is too large to return.)"
+    mime = mime_for(name)
     if os.environ.get("STORAGE_ACCOUNT_URL"):
         try:
             uri = await _upload(data, name, mime)
         except Exception as exc:
-            return f"\n\n(Could not store generated file {name}: {type(exc).__name__})"
+            return f"(Could not store generated file {name}: {type(exc).__name__})"
     else:
         uri = f"data:{mime};base64,{base64.b64encode(data).decode()}"
     if mime.startswith("image/"):
-        return f"\n\n![{name}]({uri})"
-    return f"\n\n[Download {name}]({uri})"
+        return f"![{name}]({uri})"
+    return f"[Download {name}]({uri})"
+
+
+async def _markdown(openai_client: Any, container_id: str, file_id: str, filename: str) -> str:
+    name = safe_name(filename, file_id)
+    try:
+        response = await openai_client.containers.files.content.retrieve(file_id, container_id=container_id)
+        data = await response.aread()
+    except Exception as exc:  # keep the reply usable if the download fails
+        logger.warning("Could not retrieve %s from %s: %s", file_id, container_id, exc)
+        return f"\n\n(Could not retrieve generated file {name}: {type(exc).__name__})"
+    logger.info("Returning generated file %s (%d bytes)", name, len(data))
+    return "\n\n" + await store_file(data, name)
 
 
 class GeneratedFilesMiddleware(AgentMiddleware):

@@ -5,7 +5,7 @@ Two Python hosted agents for Azure AI Foundry, built with Microsoft Agent Framew
 | Agent | Tooling | Purpose |
 |---|---|---|
 | `agents/assistant` | File search (vector store) | Grounded Q&A over uploaded docs; falls back to LLM knowledge |
-| `agents/analyst` | Code interpreter | Dataset analysis; generates charts, PDF, Office files |
+| `agents/analyst` | Code interpreter | Dataset analysis; charts via code interpreter; Word/PowerPoint/PDF/Excel via container-side tools (`shared/documents.py`) |
 
 ## Attachment contract (chat app -> agent)
 The chat app uploads files to Foundry (Files API / vector store) and prepends to the user message:
@@ -13,6 +13,7 @@ The chat app uploads files to Foundry (Files API / vector store) and prepends to
     <attachments>{"vector_store_ids": ["vs_123"], "file_ids": ["file-abc"]}</attachments>
 
 Assistant uses `vector_store_ids`; Analyst uses `file_ids`. IDs are validated and the block is stripped before the model sees it.
+Documents: `create_word`/`create_powerpoint`/`create_pdf`/`create_excel` build files from structured input (python-docx, python-pptx, reportlab, openpyxl), upload them to blob storage and return a markdown link (25 MB cap, correct MIME and Content-Disposition).
 Generated files: the hosted agent server drops file annotations, so the analyst's `GeneratedFilesMiddleware`
 (`shared/generated_files.py`) downloads each file from the code interpreter container and appends it to the reply as
 markdown (`![name](url)` for images, `[Download name](url)` otherwise; 5 MB cap). With `STORAGE_ACCOUNT_URL` set the file is
