@@ -6,6 +6,7 @@ from shared.attachments import Attachments, AttachmentToolsMiddleware
 from shared.config import make_client
 from shared.documents import DOCUMENT_TOOLS
 from shared.generated_files import GeneratedFilesMiddleware
+from shared.streaming import StreamMessageIdMiddleware
 
 INSTRUCTIONS = """You are a data analyst. Use the code interpreter to analyse uploaded datasets.
 - Inspect the data first (shape, columns, types, missing values) and state assumptions.
@@ -30,7 +31,7 @@ agent = Agent(
     description="Analyses uploaded datasets with code interpreter and generates charts and documents.",
     instructions=INSTRUCTIONS,
     tools=DOCUMENT_TOOLS,
-    middleware=[AttachmentToolsMiddleware(build_tools), GeneratedFilesMiddleware(client)],
+    middleware=[AttachmentToolsMiddleware(build_tools), GeneratedFilesMiddleware(client), StreamMessageIdMiddleware()],
 )
 
 if __name__ == "__main__":
