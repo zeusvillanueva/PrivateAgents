@@ -29,4 +29,5 @@ def test_tool_error_is_reported():
 def test_tools_invoke_with_validated_arguments(monkeypatch):
     monkeypatch.delenv("STORAGE_ACCOUNT_URL", raising=False)
     out = asyncio.run(documents.create_word.invoke(arguments={"title": "T", "sections": SECTIONS}))
-    assert "Download report.docx" in out[0].text
+    text = out if isinstance(out, str) else "".join(getattr(c, "text", None) or str(c) for c in out)
+    assert "Download report.docx" in text
