@@ -38,7 +38,7 @@ See [chat-app-integration](chat-app-integration.md) for what the chat app needs 
     PYTHONPATH=. pytest tests
 
 ## Deploy
-Pushes to `main` run `.github/workflows/build-agents.yml`: test, build/push images to ACR, then register a hosted agent
+Pushes to `main` deploy all agents; manual runs (workflow_dispatch) offer an `all` checkbox plus one per agent. They run `.github/workflows/build-agents.yml`: test, build/push images to ACR, then register a hosted agent
 version per image with `python scripts/register_agents.py` (also runnable locally after `az login`, with the `.env.example`
 vars plus `ACR_LOGIN_SERVER` and optional `IMAGE_TAG`). Hosted agents are in preview; the project identity needs AcrPull
 (granted by the platform) and the runtime identity "Azure AI User" on the project. The script's protocol version
