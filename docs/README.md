@@ -1,11 +1,17 @@
 # Hosted agents
 
-Two Python hosted agents for Azure AI Foundry, built with Microsoft Agent Framework + `azure-ai-agentserver`.
+Python hosted agents for Azure AI Foundry, built with Microsoft Agent Framework + `azure-ai-agentserver`.
 
 | Agent | Tooling | Purpose |
 |---|---|---|
 | `agents/assistant` | File search (vector store) | Grounded Q&A over uploaded docs; falls back to LLM knowledge |
 | `agents/analyst` | Code interpreter | Dataset analysis; charts via code interpreter; Word/PowerPoint/PDF/Excel via container-side tools (`shared/documents.py`) |
+| `agents/orchestrator` | None (planner only) | Plans tasks over eligible published agents, evaluates results, synthesises the final answer |
+
+The orchestrator never invokes other agents itself: hosted agents cannot call each other. It replies with JSON plans
+(`{"tasks": [{"id","agent","prompt","depends_on","expected_output"}]}`), and the chat app backend validates them against
+the published-agent registry and user permissions, runs tasks (parallel/sequential, bounded), and sends results back for
+evaluation and synthesis. The chat app passes eligible agents as `<agents>[{"name","description"}]</agents>`.
 
 ## Attachment contract (chat app -> agent)
 The chat app uploads files to Foundry (Files API / vector store) and prepends to the user message:
@@ -32,7 +38,7 @@ See [chat-app-integration](chat-app-integration.md) for what the chat app needs 
     PYTHONPATH=. pytest tests
 
 ## Deploy
-Pushes to `main` run `.github/workflows/build-agents.yml`: test, build/push images to ACR, then register a hosted agent
+Pushes to `main` deploy all agents; manual runs (workflow_dispatch) offer an `all` checkbox plus one per agent. They run `.github/workflows/build-agents.yml`: test, build/push images to ACR, then register a hosted agent
 version per image with `python scripts/register_agents.py` (also runnable locally after `az login`, with the `.env.example`
 vars plus `ACR_LOGIN_SERVER` and optional `IMAGE_TAG`). Hosted agents are in preview; the project identity needs AcrPull
 (granted by the platform) and the runtime identity "Azure AI User" on the project. The script's protocol version

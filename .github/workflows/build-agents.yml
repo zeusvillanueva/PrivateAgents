@@ -13,6 +13,22 @@ on:
           - development
           - production
         default: development
+      all:
+        description: Deploy all agents (ignores the selections below)
+        type: boolean
+        default: true
+      assistant:
+        description: Deploy assistant
+        type: boolean
+        default: false
+      analyst:
+        description: Deploy analyst
+        type: boolean
+        default: false
+      orchestrator:
+        description: Deploy orchestrator
+        type: boolean
+        default: false
 
 permissions:
   id-token: write
@@ -28,8 +44,34 @@ jobs:
       - run: pip install --pre -r requirements.txt pytest
       - run: PYTHONPATH=. pytest tests
 
+  select:
+    runs-on: ubuntu-latest
+    outputs:
+      agents: ${{ steps.pick.outputs.agents }}
+      names: ${{ steps.pick.outputs.names }}
+    steps:
+      - id: pick
+        env:
+          EVENT: ${{ github.event_name }}
+          ALL: ${{ inputs.all }}
+          ASSISTANT: ${{ inputs.assistant }}
+          ANALYST: ${{ inputs.analyst }}
+          ORCHESTRATOR: ${{ inputs.orchestrator }}
+        run: |
+          picked=()
+          if [ "$EVENT" != workflow_dispatch ] || [ "$ALL" = true ]; then
+            picked=(assistant analyst orchestrator)
+          else
+            [ "$ASSISTANT" = true ] && picked+=(assistant)
+            [ "$ANALYST" = true ] && picked+=(analyst)
+            [ "$ORCHESTRATOR" = true ] && picked+=(orchestrator)
+          fi
+          if [ ${#picked[@]} -eq 0 ]; then echo "No agents selected"; exit 1; fi
+          echo "agents=$(printf '%s\n' "${picked[@]}" | jq -R . | jq -sc .)" >> "$GITHUB_OUTPUT"
+          echo "names=${picked[*]}" >> "$GITHUB_OUTPUT"
+
   build:
-    needs: test
+    needs: [test, select]
     runs-on: ubuntu-latest
     # Environment secrets: AZURE_CLIENT_ID, AZURE_TENANT_ID, AZURE_SUBSCRIPTION_ID.
     # Environment variables: ACR_NAME, ACR_LOGIN_SERVER, AZURE_AI_PROJECT_ENDPOINT,
@@ -37,7 +79,7 @@ jobs:
     environment: ${{ inputs.environment || 'development' }}
     strategy:
       matrix:
-        agent: [assistant, analyst]
+        agent: ${{ fromJSON(needs.select.outputs.agents) }}
     steps:
       - uses: actions/checkout@v4
       - uses: azure/login@v2
@@ -53,7 +95,7 @@ jobs:
             -f "agents/${{ matrix.agent }}/Dockerfile" .
 
   register:
-    needs: build
+    needs: [select, build]
     runs-on: ubuntu-latest
     environment: ${{ inputs.environment || 'development' }}
     steps:
@@ -73,4 +115,4 @@ jobs:
           ACR_LOGIN_SERVER: ${{ vars.ACR_LOGIN_SERVER }}
           STORAGE_ACCOUNT_URL: ${{ vars.STORAGE_ACCOUNT_URL }}
           IMAGE_TAG: ${{ github.sha }}
-        run: python scripts/register_agents.py
+        run: python scripts/register_agents.py ${{ needs.select.outputs.names }}
