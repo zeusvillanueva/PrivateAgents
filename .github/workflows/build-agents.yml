@@ -37,7 +37,7 @@ jobs:
     environment: ${{ inputs.environment || 'development' }}
     strategy:
       matrix:
-        agent: [assistant, analyst]
+        agent: [assistant, analyst, orchestrator]
     steps:
       - uses: actions/checkout@v4
       - uses: azure/login@v2

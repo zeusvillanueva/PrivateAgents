@@ -25,7 +25,7 @@ App-specific, not in the platform: agent code, Dockerfiles, `build-agents.yml` w
    `AZURE_SUBSCRIPTION_ID` and variables `ACR_NAME`, `ACR_LOGIN_SERVER`, `AZURE_AI_PROJECT_ENDPOINT`,
    `AZURE_AI_MODEL_DEPLOYMENT_NAME`, `STORAGE_ACCOUNT_URL` (platform outputs / `foundryDeployments`).
    (The workflow has an `environment` selector: `development` or `production`; a `production` environment needs its own federated credential and secrets/variables.)
-4. Push to `main`: the workflow tests and builds `assistant-agent` / `analyst-agent` into the ACR.
+4. Push to `main`: the workflow tests and builds `assistant-agent` / `analyst-agent` / `orchestrator-agent` into the ACR.
 5. The `register` job then creates a hosted agent version per image in the Foundry project
    (`scripts/register_agents.py`; the CI identity needs `Foundry User` on the project).
    Agent names (`assistant-agent`, `analyst-agent`) must match what the chat app calls.
