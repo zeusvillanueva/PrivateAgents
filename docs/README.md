@@ -11,7 +11,7 @@ Python hosted agents for Azure AI Foundry, built with Microsoft Agent Framework 
 The orchestrator never invokes other agents itself: hosted agents cannot call each other. It replies with JSON plans
 (`{"tasks": [{"id","agent","prompt","depends_on","expected_output"}]}`), and the chat app backend validates them against
 the published-agent registry and user permissions, runs tasks (parallel/sequential, bounded), and sends results back for
-evaluation and synthesis. The chat app passes eligible agents as `<agents>[{"name","description"}]</agents>`.
+evaluation and synthesis. Calls carry a `<phase>` tag; see [orchestrator](orchestrator.md).
 
 ## Attachment contract (chat app -> agent)
 The chat app uploads files to Foundry (Files API / vector store) and prepends to the user message:
@@ -38,7 +38,7 @@ See [chat-app-integration](chat-app-integration.md) for what the chat app needs 
     PYTHONPATH=. pytest tests
 
 ## Deploy
-Pushes to `main` deploy all agents; manual runs (workflow_dispatch) offer an `all` checkbox plus one per agent. They run `.github/workflows/build-agents.yml`: test, build/push images to ACR, then register a hosted agent
+Pushes to `main` deploy all agents; manual runs (workflow_dispatch) offer an `all` checkbox plus one per agent. `.github/workflows/build-agents.yml` runs test, build/push images to ACR, then register a hosted agent
 version per image with `python scripts/register_agents.py` (also runnable locally after `az login`, with the `.env.example`
 vars plus `ACR_LOGIN_SERVER` and optional `IMAGE_TAG`). Hosted agents are in preview; the project identity needs AcrPull
 (granted by the platform) and the runtime identity "Azure AI User" on the project. The script's protocol version
