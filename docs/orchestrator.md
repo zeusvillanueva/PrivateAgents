@@ -14,15 +14,18 @@ invoke each other. The chat app backend (`../PIAIAgentsChatApp`) is the orchestr
 
 ## Runtime sequence
 1. Chat app authenticates the user and loads the active orchestrator plus the agents the user may use.
-2. It calls `orchestrator-agent` with the prompt and `<agents>[{"name": "...", "description": "..."}]</agents>`.
+2. It calls `orchestrator-agent` with `<phase>plan</phase>`, the prompt and `<agents>[{"name": "...", "description": "..."}]</agents>`.
 3. The agent replies with a plan (below). The backend validates it: known and eligible agent names only, unique task ids,
    existing `depends_on` ids, no cycles, task/round limits.
 4. Independent tasks run concurrently; dependent tasks run after their dependencies. Failed or unavailable tasks are
    reported, never replaced by invented calls.
-5. Results go back to the orchestrator for evaluation; it may request a bounded number of follow-up tasks.
-6. The backend asks for the final answer and returns it through the normal chat experience.
+5. Results go back with `<phase>evaluate</phase>`; it may request a bounded number of follow-up tasks.
+6. The backend sends `<phase>synthesize</phase>` with all results for the final answer and returns it through the normal chat experience.
 
 ## Message contract
+Every orchestrator call must carry a phase tag (`<phase>plan</phase>`, `<phase>evaluate</phase>` or `<phase>synthesize</phase>`).
+Without one the agent behaves as a normal chat agent and never returns plan JSON, so selecting it as a plain agent in
+the chat app will not trigger orchestration.
 Planning reply (JSON only):
 
     {"tasks": [{"id": "t1", "agent": "assistant-agent", "prompt": "...", "depends_on": [], "expected_output": "..."}]}
@@ -30,7 +33,7 @@ Planning reply (JSON only):
 `{"tasks": []}` means no agent is needed. Evaluation reply: `{"done": true}` or `{"done": false, "tasks": [...]}`.
 Synthesis reply: prose that keeps citations and download links verbatim and states gaps, uncertainties and failed tasks.
 
-The agent is told to use only names from the `<agents>` list, but the backend must not rely on that: always validate.
+The agent is told to use only names from the `<agents>` list (exact `name` values such as `analyst-agent`), but the backend must not rely on that: always validate.
 
 ## Deploy and publish
 - Built and registered like the other agents (`.github/workflows/build-agents.yml`, `scripts/register_agents.py`).

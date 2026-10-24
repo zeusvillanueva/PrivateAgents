@@ -11,7 +11,7 @@ Python hosted agents for Azure AI Foundry, built with Microsoft Agent Framework 
 The orchestrator never invokes other agents itself: hosted agents cannot call each other. It replies with JSON plans
 (`{"tasks": [{"id","agent","prompt","depends_on","expected_output"}]}`), and the chat app backend validates them against
 the published-agent registry and user permissions, runs tasks (parallel/sequential, bounded), and sends results back for
-evaluation and synthesis. See [orchestrator](orchestrator.md).
+evaluation and synthesis. Calls carry a `<phase>` tag; see [orchestrator](orchestrator.md).
 
 ## Attachment contract (chat app -> agent)
 The chat app uploads files to Foundry (Files API / vector store) and prepends to the user message:
