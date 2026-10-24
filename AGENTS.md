@@ -12,8 +12,10 @@ Hosted Foundry agents (Microsoft Agent Framework, Python) for Teams/Copilot, loa
 - Keep the attachment contract (`docs/README.md`) in sync with the chat app.
 - **The chat app must be able to load every agent.** See the checklist in [docs/chat-app-integration.md](docs/chat-app-integration.md). Key rules: Foundry agent name == `<name>-agent` == the chat app's Cosmos agent `name`; hosted `responses` protocol only; never use `AzureAIClient(agent_name=...)` (it creates a conflicting prompt agent); return files as https links, not `sandbox:` paths.
 
+- **Orchestrator is planner-only.** `agents/orchestrator` has no tools and never invokes other agents (hosted agents can't call each other). It returns JSON plans/evaluations and a final synthesis; plan validation, authorization, execution and limits belong to the chat app backend (see [docs/orchestrator.md](docs/orchestrator.md)). Keep the plan JSON contract in sync with the chat app, and don't let it invent agent names.
+
 ## Conventions
-- New agent: `agents/<name>/{main.py,Dockerfile,requirements.txt}`, add to the workflow matrix, `AGENTS` in `scripts/register_agents.py` (with a description) and docs, then follow the chat app checklist.
+- New agent: `agents/<name>/{main.py,Dockerfile,requirements.txt}`, add to the workflow matrix (`select` job in `build-agents.yml`, plus a `workflow_dispatch` checkbox input), `AGENTS` in `scripts/register_agents.py` (with a description) and docs, then follow the chat app checklist.
 - Run `PYTHONPATH=. pytest tests` before committing.
 - Update docs when agents, env vars or platform dependencies change.
 
