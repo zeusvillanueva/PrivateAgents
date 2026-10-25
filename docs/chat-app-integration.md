@@ -17,8 +17,9 @@ How `../PIAIAgentsChatApp` finds and calls these agents. Follow this whenever an
 7. **Attachments:** keep the `<attachments>{...}</attachments>` contract in [README](README.md) in sync with the chat app.
 8. **Files:** never return `sandbox:/mnt/data/...` links. Use `GeneratedFilesMiddleware` (https SAS links via `STORAGE_ACCOUNT_URL`). The agent's instance identity needs Storage Blob Data Contributor on the `agent-files` container and Storage Blob Delegator on the storage account (platform-owned). The chat app renders markdown images and allows links.
 9. **Description:** add a `DESCRIPTIONS` entry in `scripts/register_agents.py`; use the same text as the chat app agent description.
+10. **Icon:** each agent ships `agents/<name>/icon.svg` (64x64, rounded square). The chat app should load it for the agent's avatar; keep it in sync when adding agents.
 
-10. **Orchestrator:** `orchestrator-agent` is planner-only; the chat app must run its plans and may select only one active orchestrator. See [orchestrator](orchestrator.md).
+11. **Orchestrator:** `orchestrator-agent` is planner-only; the chat app must run its plans and may select only one active orchestrator. See [orchestrator](orchestrator.md).
 
 ## Smoke test
     python - <<'PY'
