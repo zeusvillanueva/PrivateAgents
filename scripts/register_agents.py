@@ -2,7 +2,7 @@
 
 Env: AZURE_AI_PROJECT_ENDPOINT, AZURE_AI_MODEL_DEPLOYMENT_NAME, ACR_LOGIN_SERVER, IMAGE_TAG (default latest),
 STORAGE_ACCOUNT_URL (optional; generated files are uploaded there and linked with SAS URLs).
-Usage: python scripts/register_agents.py [assistant analyst orchestrator]
+Usage: python scripts/register_agents.py [assistant analyst orchestrator agent-builder]
 """
 import os
 import sys
@@ -19,6 +19,7 @@ DESCRIPTIONS = {
     "assistant": "Answers questions using uploaded documents (file search), or general knowledge when none are provided.",
     "analyst": "Analyses uploaded datasets with code interpreter and generates charts, PDFs and Office documents.",
     "orchestrator": "Plans which published agents to use, evaluates their results and synthesises the final answer.",
+    "agent-builder": "Interviews you about the agent you want and prepares its definition for creation in the chat app.",
 }
 AGENTS = list(DESCRIPTIONS)
 

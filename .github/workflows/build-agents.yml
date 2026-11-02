@@ -29,6 +29,10 @@ on:
         description: Deploy orchestrator
         type: boolean
         default: false
+      agent-builder:
+        description: Deploy agent-builder
+        type: boolean
+        default: false
 
 permissions:
   id-token: write
@@ -57,14 +61,16 @@ jobs:
           ASSISTANT: ${{ inputs.assistant }}
           ANALYST: ${{ inputs.analyst }}
           ORCHESTRATOR: ${{ inputs.orchestrator }}
+          AGENT_BUILDER: ${{ inputs.agent-builder }}
         run: |
           picked=()
           if [ "$EVENT" != workflow_dispatch ] || [ "$ALL" = true ]; then
-            picked=(assistant analyst orchestrator)
+            picked=(assistant analyst orchestrator agent-builder)
           else
             [ "$ASSISTANT" = true ] && picked+=(assistant)
             [ "$ANALYST" = true ] && picked+=(analyst)
             [ "$ORCHESTRATOR" = true ] && picked+=(orchestrator)
+            [ "$AGENT_BUILDER" = true ] && picked+=(agent-builder)
           fi
           if [ ${#picked[@]} -eq 0 ]; then echo "No agents selected"; exit 1; fi
           echo "agents=$(printf '%s\n' "${picked[@]}" | jq -R . | jq -sc .)" >> "$GITHUB_OUTPUT"
