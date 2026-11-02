@@ -20,6 +20,7 @@ How `../PIAIAgentsChatApp` finds and calls these agents. Follow this whenever an
 10. **Icon:** each agent ships `agents/<name>/icon.svg` (64x64, rounded square). The chat app should load it for the agent's avatar; keep it in sync when adding agents.
 
 11. **Orchestrator:** `orchestrator-agent` is planner-only; the chat app must run its plans and may select only one active orchestrator. See [orchestrator](orchestrator.md).
+12. **Agent builder:** `agent-builder-agent` is JSON-only (no tools); it replies `ask`/`ready` JSON for `<phase>build</phase>` calls. The chat app must validate the definition, ask the user to confirm, and create the prompt agent. See [agent-builder](agent-builder.md).
 
 ## Smoke test
     python - <<'PY'
