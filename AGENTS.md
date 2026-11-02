@@ -7,6 +7,7 @@ Hosted Foundry agents (Microsoft Agent Framework, Python) for Teams/Copilot, loa
 
 ## Principles
 - **No infra here.** Shared Azure resources (Foundry project, model, ACR, RBAC) are owned by `../AIAgentsPlatformInfra`. Only app-specific pieces live here: agent code, Dockerfiles, `.github/workflows/build-agents.yml`. See [docs/infrastructure.md](docs/infrastructure.md).
+- **Reuse platform resources; never create new ones.** Use the Foundry account/project, model deployment, code interpreter, ACR and storage account from `AIAgentsPlatformInfra`. Don't spin up new Azure OpenAI/Foundry accounts, model deployments, search/storage/other services for a feature. If something is missing (container, role, service), document it in `docs/infrastructure.md` as a platform change to make in `../AIAgentsPlatformInfra`, rather than provisioning it from this repo.
 - **Identity over keys.** Use `DefaultAzureCredential`; never commit secrets. CI uses GitHub OIDC.
 - **Config via env** (`.env.example`); values come from platform outputs (`foundryProjectEndpoint`, `acrName`). Don't hard-code endpoints or deployment names.
 - Keep the attachment contract (`docs/README.md`) in sync with the chat app.
