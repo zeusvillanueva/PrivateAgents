@@ -22,6 +22,7 @@ How `../PIAIAgentsChatApp` finds and calls these agents. Follow this whenever an
 11. **Orchestrator:** `orchestrator-agent` is planner-only; the chat app must run its plans and may select only one active orchestrator. See [orchestrator](orchestrator.md).
 12. **Agent builder:** `agent-builder-agent` is JSON-only (no tools); it replies `ask`/`ready` JSON for `<phase>build</phase>` calls. The chat app must validate the definition, ask the user to confirm, and create the prompt agent. See [agent-builder](agent-builder.md).
 13. **Markdown and diagram agents:** `markdown-agent` and `diagram-creator-agent` have no tools and return text. Register each in the Cosmos `agents` container with that exact name. Diagrams are ```` ```mermaid ```` fenced blocks; the chat app must render them (e.g. the `mermaid` npm package) or they show as source. It currently has no Mermaid support.
+14. **Image creator:** `image-creator-agent` returns a markdown image (`![image.png](https://...blob...?sas)`); the chat app renders it like analyst charts. Register it with that exact name. Needs `IMAGE_PROJECT_ENDPOINT` and role grants (see [infrastructure](infrastructure.md)).
 
 ## Smoke test
     python - <<'PY'
@@ -31,3 +32,16 @@ How `../PIAIAgentsChatApp` finds and calls these agents. Follow this whenever an
     print(c.get_openai_client(agent_name="assistant-agent").responses.create(input="Say hello").output_text)
     PY
 Then send a message to the agent from the chat app.
+
+## Suggested agent icons
+The chat app's `Agent` type has no icon field yet (it shows 🤖 for every agent), so icons must be added there. Suggested set:
+
+| Agent | Icon |
+|---|---|
+| `assistant-agent` | 💬 |
+| `analyst-agent` | 📊 |
+| `orchestrator-agent` | 🧭 |
+| `agent-builder-agent` | 🛠️ |
+| `markdown-agent` | 📝 |
+| `diagram-creator-agent` | 🔀 |
+| `image-creator-agent` | 🎨 |

@@ -23,14 +23,21 @@ App-specific, not in the platform: agent code, Dockerfiles, `build-agents.yml` w
    `listBuildSourceUploadUrl`) and `Foundry User` on the `agents` project. Ideally via platform `appIdentities`.
 3. In this repo create GitHub environment `development` with secrets `AZURE_CLIENT_ID`, `AZURE_TENANT_ID`,
    `AZURE_SUBSCRIPTION_ID` and variables `ACR_NAME`, `ACR_LOGIN_SERVER`, `AZURE_AI_PROJECT_ENDPOINT`,
-   `AZURE_AI_MODEL_DEPLOYMENT_NAME`, `STORAGE_ACCOUNT_URL` (platform outputs / `foundryDeployments`).
+   `AZURE_AI_MODEL_DEPLOYMENT_NAME`, `STORAGE_ACCOUNT_URL`, `IMAGE_PROJECT_ENDPOINT`, `IMAGE_MODEL_DEPLOYMENT_NAME`
+   (platform outputs `foundryProjectEndpoint`, `foundryImagesProjectEndpoint` / `foundryDeployments`; image model is `gpt-image-2`).
    (The workflow has an `environment` selector: `development` or `production`; a `production` environment needs its own federated credential and secrets/variables.)
-4. Push to `main`: the workflow tests and builds `assistant-agent` / `analyst-agent` / `orchestrator-agent` / `agent-builder-agent` / `markdown-agent` / `diagram-creator-agent` into the ACR.
+4. Push to `main`: the workflow tests and builds `assistant-agent` / `analyst-agent` / `orchestrator-agent` / `agent-builder-agent` / `markdown-agent` / `diagram-creator-agent` / `image-creator-agent` into the ACR.
 5. The `register` job then creates a hosted agent version per image in the Foundry project
    (`scripts/register_agents.py`; the CI identity needs `Foundry User` on the project).
    Agent names (`assistant-agent`, `analyst-agent`) must match what the chat app calls.
 
-## Generated files storage (analyst)
+## Image generation (image-creator)
+`image-creator-agent` calls the platform's `gpt-image-2` deployment on the separate image Foundry account
+(`aif-img-aiplat-poc-uhh3uk`, East US 2; platform param `deployFoundryImages`). Its instance identity needs `Foundry User`
+on that image account, plus the storage roles below (it stores the PNG in `agent-files`). Both are granted per agent
+instance identity after the first registration; no new Azure resources are created by this repo.
+
+## Generated files storage (analyst, image-creator)
 The analyst uploads generated files to the `agent-files` container of the platform storage account (lifecycle rule: delete
 after 8 days). Each agent's instance identity needs `Storage Blob Data Contributor` on the container and
 `Storage Blob Delegator` on the account. Instance identities are per agent and appear after the first registration

@@ -1,8 +1,9 @@
 """Register ACR images as Foundry hosted agent versions.
 
 Env: AZURE_AI_PROJECT_ENDPOINT, AZURE_AI_MODEL_DEPLOYMENT_NAME, ACR_LOGIN_SERVER, IMAGE_TAG (default latest),
-STORAGE_ACCOUNT_URL (optional; generated files are uploaded there and linked with SAS URLs).
-Usage: python scripts/register_agents.py [assistant analyst orchestrator agent-builder markdown diagram-creator]
+STORAGE_ACCOUNT_URL (optional; generated files are uploaded there and linked with SAS URLs),
+IMAGE_PROJECT_ENDPOINT + IMAGE_MODEL_DEPLOYMENT_NAME (optional; image-creator, from platform output `foundryImagesProjectEndpoint`).
+Usage: python scripts/register_agents.py [assistant analyst orchestrator agent-builder markdown diagram-creator image-creator]
 """
 import os
 import sys
@@ -22,6 +23,7 @@ DESCRIPTIONS = {
     "agent-builder": "Interviews you about the agent you want and prepares its definition for creation in the chat app.",
     "markdown": "Writes Markdown documents (READMEs, specs, runbooks, ADRs, notes).",
     "diagram-creator": "Creates and fixes Mermaid diagrams (flowchart, sequence, class, ER, state, Gantt, mindmap).",
+    "image-creator": "Creates images from text descriptions using the platform's gpt-image-2 deployment.",
 }
 AGENTS = list(DESCRIPTIONS)
 
@@ -35,6 +37,9 @@ def main(names: list[str]) -> None:
     env_vars = {"AZURE_AI_PROJECT_ENDPOINT": endpoint, "AZURE_AI_MODEL_DEPLOYMENT_NAME": model}
     if os.environ.get("STORAGE_ACCOUNT_URL"):
         env_vars["STORAGE_ACCOUNT_URL"] = os.environ["STORAGE_ACCOUNT_URL"]
+    for key in ("IMAGE_PROJECT_ENDPOINT", "IMAGE_MODEL_DEPLOYMENT_NAME"):
+        if os.environ.get(key):
+            env_vars[key] = os.environ[key]
 
     client = AIProjectClient(endpoint=endpoint, credential=DefaultAzureCredential())
     for name in names:
