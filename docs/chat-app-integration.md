@@ -21,6 +21,7 @@ How `../PIAIAgentsChatApp` finds and calls these agents. Follow this whenever an
 
 11. **Orchestrator:** `orchestrator-agent` is planner-only; the chat app must run its plans and may select only one active orchestrator. See [orchestrator](orchestrator.md).
 12. **Agent builder:** `agent-builder-agent` is JSON-only (no tools); it replies `ask`/`ready` JSON for `<phase>build</phase>` calls. The chat app must validate the definition, ask the user to confirm, and create the prompt agent. See [agent-builder](agent-builder.md).
+13. **Markdown agent:** `markdown-agent` has no tools and returns Markdown text; diagrams are ```` ```mermaid ```` fenced blocks. Register it in the Cosmos `agents` container with that exact name. The chat app must render `mermaid` code blocks as diagrams (e.g. the `mermaid` npm package) or they show as source; it currently has no Mermaid support.
 
 ## Smoke test
     python - <<'PY'
