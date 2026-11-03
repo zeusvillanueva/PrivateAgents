@@ -35,3 +35,30 @@ def test_markdown_image_and_file():
 
 def test_markdown_too_large():
     assert "too large" in asyncio.run(_markdown(_client(b"x" * (MAX_BYTES + 1)), "c", "f", "big.png"))
+
+
+def test_upload_sas_times_are_whole_second_utc(monkeypatch):
+    from datetime import timezone
+    from unittest.mock import AsyncMock, MagicMock, patch
+
+    from shared import generated_files
+
+    monkeypatch.setenv("STORAGE_ACCOUNT_URL", "https://acct.blob.core.windows.net")
+    service = MagicMock(account_name="acct")
+    service.get_user_delegation_key = AsyncMock(return_value="key")
+    service.get_blob_client.return_value.upload_blob = AsyncMock()
+    service.__aenter__ = AsyncMock(return_value=service)
+    service.__aexit__ = AsyncMock(return_value=None)
+    cred = MagicMock()
+    cred.__aenter__ = AsyncMock(return_value=cred)
+    cred.__aexit__ = AsyncMock(return_value=None)
+
+    with patch("azure.storage.blob.generate_blob_sas", return_value="sig=1") as sas, \
+            patch("azure.storage.blob.aio.BlobServiceClient", return_value=service), \
+            patch("azure.identity.aio.DefaultAzureCredential", return_value=cred):
+        url = asyncio.run(generated_files._upload(b"x", "a.pdf", "application/pdf"))
+
+    assert url.endswith("?sig=1")
+    key_start, key_expiry = service.get_user_delegation_key.call_args.args
+    for value in (key_start, key_expiry, sas.call_args.kwargs["start"], sas.call_args.kwargs["expiry"]):
+        assert value.microsecond == 0 and value.tzinfo == timezone.utc

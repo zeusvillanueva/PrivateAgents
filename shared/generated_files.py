@@ -60,7 +60,8 @@ async def _upload(data: bytes, name: str, mime: str) -> str:
     container = os.environ.get("GENERATED_FILES_CONTAINER", "agent-files")
     blob_name = f"{uuid.uuid4().hex}/{name}"
     async with DefaultAzureCredential() as credential, BlobServiceClient(account_url, credential=credential) as service:
-        start = datetime.now(timezone.utc) - timedelta(minutes=5)
+        # Whole seconds only: SAS rejects fractional-second timestamps ("se" not well formed).
+        start = datetime.now(timezone.utc).replace(microsecond=0) - timedelta(minutes=5)
         expiry = start + timedelta(days=7)
         key = await service.get_user_delegation_key(start, expiry)
         await service.get_blob_client(container, blob_name).upload_blob(
