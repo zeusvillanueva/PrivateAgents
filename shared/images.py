@@ -7,10 +7,11 @@ generated_files.store_file (blob SAS link) and returned as markdown for the mode
 
 import base64
 import os
+import re
 from typing import Annotated
 from urllib.parse import urlparse
 
-from agent_framework import tool
+from agent_framework import AgentContext, AgentMiddleware, Content, tool
 
 from shared.generated_files import store_file
 
@@ -59,3 +60,43 @@ async def generate_image(
     except Exception as exc:
         return f"Image generation failed ({type(exc).__name__}). Tell the user it could not be generated."
     return await store_file(data, "image.png")
+
+
+_IMAGE_MD = re.compile(r"!\[[^\]]*\]\(https?://[^)\s]+\)")
+
+
+def _tool_images(contents) -> list[str]:
+    found = []
+    for content in contents or []:
+        if getattr(content, "type", None) == "function_result":
+            found += _IMAGE_MD.findall(str(getattr(content, "result", "") or ""))
+    return found
+
+
+class ToolImagesMiddleware(AgentMiddleware):
+    """Append images returned by tools to the reply, since the model often omits the link."""
+
+    async def process(self, context: AgentContext, call_next) -> None:
+        await call_next()
+        result = context.result
+        if result is None:
+            return
+        pending: list[str] = []
+        if context.stream:
+
+            def hook(update):
+                pending.extend(i for i in _tool_images(update.contents) if i not in pending)
+                if pending and any(getattr(c, "type", None) == "text" for c in update.contents or []):
+                    update.contents.append(Content.from_text("\n\n" + "\n\n".join(pending) + "\n\n"))
+                    pending.clear()
+                return update
+
+            result.with_transform_hook(hook)
+            return
+        images = []
+        for message in result.messages:
+            images += _tool_images(message.contents)
+        text = "".join(getattr(m, "text", "") or "" for m in result.messages)
+        missing = [i for i in dict.fromkeys(images) if i not in text]
+        if missing:
+            result.messages[-1].contents.append(Content.from_text("\n\n" + "\n\n".join(missing)))
