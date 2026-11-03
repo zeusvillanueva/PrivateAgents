@@ -44,3 +44,22 @@ def test_agent(monkeypatch):
     spec.loader.exec_module(module)
     assert module.agent.name == "image-creator-agent"
     assert "generate_image" in module.INSTRUCTIONS
+
+
+def test_tool_images_appended_once_streaming():
+    from types import SimpleNamespace as NS
+
+    md = "![image.png](https://blob/a.png?sas=1)"
+    hooks = []
+    ctx = NS(result=NS(with_transform_hook=hooks.append), stream=True)
+
+    async def nxt():
+        pass
+
+    asyncio.run(images.ToolImagesMiddleware().process(ctx, nxt))
+    res = NS(contents=[NS(type="function_result", result=[md])])
+    hooks[0](res)
+    txt = NS(contents=[NS(type="text")])
+    out = hooks[0](txt)
+    assert len(out.contents) == 2 and md in out.contents[1].text
+    assert len(hooks[0](NS(contents=[NS(type="text")])).contents) == 1
