@@ -41,6 +41,10 @@ on:
         description: Deploy diagram-creator
         type: boolean
         default: false
+      image-creator:
+        description: Deploy image-creator
+        type: boolean
+        default: false
 
 permissions:
   id-token: write
@@ -72,10 +76,11 @@ jobs:
           AGENT_BUILDER: ${{ inputs.agent-builder }}
           MARKDOWN: ${{ inputs.markdown }}
           DIAGRAM_CREATOR: ${{ inputs.diagram-creator }}
+          IMAGE_CREATOR: ${{ inputs.image-creator }}
         run: |
           picked=()
           if [ "$EVENT" != workflow_dispatch ] || [ "$ALL" = true ]; then
-            picked=(assistant analyst orchestrator agent-builder markdown diagram-creator)
+            picked=(assistant analyst orchestrator agent-builder markdown diagram-creator image-creator)
           else
             [ "$ASSISTANT" = true ] && picked+=(assistant)
             [ "$ANALYST" = true ] && picked+=(analyst)
@@ -83,6 +88,7 @@ jobs:
             [ "$AGENT_BUILDER" = true ] && picked+=(agent-builder)
             [ "$MARKDOWN" = true ] && picked+=(markdown)
             [ "$DIAGRAM_CREATOR" = true ] && picked+=(diagram-creator)
+            [ "$IMAGE_CREATOR" = true ] && picked+=(image-creator)
           fi
           if [ ${#picked[@]} -eq 0 ]; then echo "No agents selected"; exit 1; fi
           echo "agents=$(printf '%s\n' "${picked[@]}" | jq -R . | jq -sc .)" >> "$GITHUB_OUTPUT"
@@ -132,5 +138,7 @@ jobs:
           AZURE_AI_MODEL_DEPLOYMENT_NAME: ${{ vars.AZURE_AI_MODEL_DEPLOYMENT_NAME }}
           ACR_LOGIN_SERVER: ${{ vars.ACR_LOGIN_SERVER }}
           STORAGE_ACCOUNT_URL: ${{ vars.STORAGE_ACCOUNT_URL }}
+          IMAGE_PROJECT_ENDPOINT: ${{ vars.IMAGE_PROJECT_ENDPOINT }}
+          IMAGE_MODEL_DEPLOYMENT_NAME: ${{ vars.IMAGE_MODEL_DEPLOYMENT_NAME }}
           IMAGE_TAG: ${{ github.sha }}
         run: python scripts/register_agents.py ${{ needs.select.outputs.names }}
