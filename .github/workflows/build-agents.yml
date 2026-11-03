@@ -37,6 +37,10 @@ on:
         description: Deploy markdown
         type: boolean
         default: false
+      diagram-creator:
+        description: Deploy diagram-creator
+        type: boolean
+        default: false
 
 permissions:
   id-token: write
@@ -67,16 +71,18 @@ jobs:
           ORCHESTRATOR: ${{ inputs.orchestrator }}
           AGENT_BUILDER: ${{ inputs.agent-builder }}
           MARKDOWN: ${{ inputs.markdown }}
+          DIAGRAM_CREATOR: ${{ inputs.diagram-creator }}
         run: |
           picked=()
           if [ "$EVENT" != workflow_dispatch ] || [ "$ALL" = true ]; then
-            picked=(assistant analyst orchestrator agent-builder markdown)
+            picked=(assistant analyst orchestrator agent-builder markdown diagram-creator)
           else
             [ "$ASSISTANT" = true ] && picked+=(assistant)
             [ "$ANALYST" = true ] && picked+=(analyst)
             [ "$ORCHESTRATOR" = true ] && picked+=(orchestrator)
             [ "$AGENT_BUILDER" = true ] && picked+=(agent-builder)
             [ "$MARKDOWN" = true ] && picked+=(markdown)
+            [ "$DIAGRAM_CREATOR" = true ] && picked+=(diagram-creator)
           fi
           if [ ${#picked[@]} -eq 0 ]; then echo "No agents selected"; exit 1; fi
           echo "agents=$(printf '%s\n' "${picked[@]}" | jq -R . | jq -sc .)" >> "$GITHUB_OUTPUT"

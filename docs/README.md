@@ -8,7 +8,8 @@ Python hosted agents for Azure AI Foundry, built with Microsoft Agent Framework 
 | `agents/analyst` | Code interpreter | Dataset analysis; charts via code interpreter; Word/PowerPoint/PDF/Excel via container-side tools (`shared/documents.py`) |
 | `agents/orchestrator` | None (planner only) | Plans tasks over eligible published agents, evaluates results, synthesises the final answer |
 | `agents/agent-builder` | None (JSON only) | Interviews the user and emits a prompt-agent definition; the chat app validates and creates it. See [agent-builder](agent-builder.md) |
-| `agents/markdown` | None (text only) | Writes Markdown documents and Mermaid diagrams (IDEA-030). Replies with Markdown; ` ```mermaid ` blocks need a renderer in the client |
+| `agents/markdown` | None (text only) | Writes Markdown documents (IDEA-030) |
+| `agents/diagram-creator` | None (text only) | Creates and fixes Mermaid diagrams (IDEA-030); replies with ```` ```mermaid ```` blocks that need a renderer in the client |
 
 The orchestrator never invokes other agents itself: hosted agents cannot call each other. It replies with JSON plans
 (`{"tasks": [{"id","agent","prompt","depends_on","expected_output"}]}`), and the chat app backend validates them against

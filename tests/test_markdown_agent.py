@@ -15,5 +15,5 @@ def _load(monkeypatch):
 def test_markdown_agent(monkeypatch):
     module = _load(monkeypatch)
     assert module.agent.name == "markdown-agent"
-    for keyword in ("```mermaid", "flowchart", "sequenceDiagram", "erDiagram", "Markdown"):
+    for keyword in ("Markdown", "README", "diagram-creator"):
         assert keyword in module.INSTRUCTIONS, keyword
