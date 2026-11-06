@@ -36,6 +36,8 @@ on the storage account (platform resources; see [infrastructure](infrastructure.
 See [chat-app-integration](chat-app-integration.md) for what the chat app needs to load and use these agents.
 
 ## SharePoint auth contract (chat app -> sharepoint-agent)
+Full setup, prerequisites and troubleshooting: [sharepoint-agent](sharepoint-agent.md).
+
 The agent acts as the signed-in user, so the chat app must obtain delegated tokens (e.g. on-behalf-of) and prepend:
 
     <sharepoint_auth>{"graph_token": "...", "sharepoint_token": "..."}</sharepoint_auth>
