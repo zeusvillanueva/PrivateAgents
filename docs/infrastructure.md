@@ -26,7 +26,7 @@ App-specific, not in the platform: agent code, Dockerfiles, `build-agents.yml` w
    `AZURE_AI_MODEL_DEPLOYMENT_NAME`, `STORAGE_ACCOUNT_URL`, `IMAGE_PROJECT_ENDPOINT`, `IMAGE_MODEL_DEPLOYMENT_NAME`
    (platform outputs `foundryProjectEndpoint`, `foundryImagesProjectEndpoint` / `foundryDeployments`; image model is `gpt-image-2`).
    (The workflow has an `environment` selector: `development` or `production`; a `production` environment needs its own federated credential and secrets/variables.)
-4. Push to `main`: the workflow tests and builds `assistant-agent` / `analyst-agent` / `orchestrator-agent` / `agent-builder-agent` / `markdown-agent` / `diagram-creator-agent` / `image-creator-agent` into the ACR.
+4. Push to `main`: the workflow tests and builds `assistant-agent` / `analyst-agent` / `orchestrator-agent` / `agent-builder-agent` / `markdown-agent` / `diagram-creator-agent` / `image-creator-agent` / `sharepoint-agent` into the ACR.
 5. The `register` job then creates a hosted agent version per image in the Foundry project
    (`scripts/register_agents.py`; the CI identity needs `Foundry User` on the project).
    Agent names (`assistant-agent`, `analyst-agent`) must match what the chat app calls.
@@ -42,3 +42,8 @@ The analyst uploads generated files to the `agent-files` container of the platfo
 after 8 days). Each agent's instance identity needs `Storage Blob Data Contributor` on the container and
 `Storage Blob Delegator` on the account. Instance identities are per agent and appear after the first registration
 (`GET .../agents/<name>` -> `instance_identity.principal_id`); re-grant if an agent is deleted and recreated.
+
+## SharePoint (sharepoint-agent)
+No Azure resources are created here. Access is delegated: the chat app's Entra app registration needs delegated
+`Sites.Read.All` + `Files.Read.All` (Graph) and optionally `AllSites.Read` (SharePoint Online) with admin consent, and must
+exchange the signed-in user's token on-behalf-of. Platform change to make in `../AIAgentsPlatformInfra`/tenant if missing.

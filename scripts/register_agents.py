@@ -3,7 +3,7 @@
 Env: AZURE_AI_PROJECT_ENDPOINT, AZURE_AI_MODEL_DEPLOYMENT_NAME, ACR_LOGIN_SERVER, IMAGE_TAG (default latest),
 STORAGE_ACCOUNT_URL (optional; generated files are uploaded there and linked with SAS URLs),
 IMAGE_PROJECT_ENDPOINT + IMAGE_MODEL_DEPLOYMENT_NAME (optional; image-creator, from platform output `foundryImagesProjectEndpoint`).
-Usage: python scripts/register_agents.py [assistant analyst orchestrator agent-builder markdown diagram-creator image-creator]
+Usage: python scripts/register_agents.py [assistant analyst orchestrator agent-builder markdown diagram-creator image-creator sharepoint]
 """
 import os
 import sys
@@ -24,6 +24,7 @@ DESCRIPTIONS = {
     "markdown": "Writes Markdown documents (READMEs, specs, runbooks, ADRs, notes).",
     "diagram-creator": "Creates and fixes Mermaid diagrams (flowchart, sequence, class, ER, state, Gantt, mindmap).",
     "image-creator": "Creates images from text descriptions using the platform's gpt-image-2 deployment.",
+    "sharepoint": "Searches a SharePoint site as the signed-in user (checks access and permission level) and answers from the top 10 results.",
 }
 AGENTS = list(DESCRIPTIONS)
 
