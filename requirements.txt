@@ -6,3 +6,5 @@ python-docx
 python-pptx
 reportlab
 openpyxl
+httpx
+pypdf

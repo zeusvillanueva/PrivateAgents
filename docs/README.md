@@ -11,6 +11,7 @@ Python hosted agents for Azure AI Foundry, built with Microsoft Agent Framework 
 | `agents/markdown` | None (text only) | Writes Markdown documents (IDEA-030) |
 | `agents/diagram-creator` | None (text only) | Creates and fixes Mermaid diagrams (IDEA-030); replies with ```` ```mermaid ```` blocks that need a renderer in the client |
 | `agents/image-creator` | `generate_image` (gpt-image-2) | Creates images from text via the platform image Foundry account; returns a blob SAS image link (`shared/images.py`) |
+| `agents/sharepoint` | `check_site_access`, `search_sharepoint` (Graph + SharePoint REST), code interpreter | Asks for a site URL, checks the user's access/permission level, rewrites the prompt into a keyword query, searches SharePoint (top 10 across site pages, Word, PowerPoint, PDF, Excel, text; Excel previews) and answers from the results (`shared/sharepoint.py`) |
 
 The orchestrator never invokes other agents itself: hosted agents cannot call each other. It replies with JSON plans
 (`{"tasks": [{"id","agent","prompt","depends_on","expected_output"}]}`), and the chat app backend validates them against
@@ -33,6 +34,15 @@ Requirements: the agent's instance identity needs Storage Blob Data Contributor 
 on the storage account (platform resources; see [infrastructure](infrastructure.md)).
 
 See [chat-app-integration](chat-app-integration.md) for what the chat app needs to load and use these agents.
+
+## SharePoint auth contract (chat app -> sharepoint-agent)
+The agent acts as the signed-in user, so the chat app must obtain delegated tokens (e.g. on-behalf-of) and prepend:
+
+    <sharepoint_auth>{"graph_token": "...", "sharepoint_token": "..."}</sharepoint_auth>
+
+`graph_token` (audience Graph; `Sites.Read.All`, `Files.Read.All`) is required; `sharepoint_token` (audience
+`https://<tenant>.sharepoint.com`, `AllSites.Read`) is optional and only used for the permission level. The block is stripped
+before the model sees it and tokens are never logged or returned. Requires an Entra app registration with these delegated scopes (platform/tenant admin consent).
 
 ## Run locally
     python -m venv .venv && . .venv/bin/activate

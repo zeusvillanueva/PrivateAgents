@@ -45,6 +45,10 @@ on:
         description: Deploy image-creator
         type: boolean
         default: false
+      sharepoint:
+        description: Deploy sharepoint
+        type: boolean
+        default: false
 
 permissions:
   id-token: write
@@ -77,10 +81,11 @@ jobs:
           MARKDOWN: ${{ inputs.markdown }}
           DIAGRAM_CREATOR: ${{ inputs.diagram-creator }}
           IMAGE_CREATOR: ${{ inputs.image-creator }}
+          SHAREPOINT: ${{ inputs.sharepoint }}
         run: |
           picked=()
           if [ "$EVENT" != workflow_dispatch ] || [ "$ALL" = true ]; then
-            picked=(assistant analyst orchestrator agent-builder markdown diagram-creator image-creator)
+            picked=(assistant analyst orchestrator agent-builder markdown diagram-creator image-creator sharepoint)
           else
             [ "$ASSISTANT" = true ] && picked+=(assistant)
             [ "$ANALYST" = true ] && picked+=(analyst)
@@ -89,6 +94,7 @@ jobs:
             [ "$MARKDOWN" = true ] && picked+=(markdown)
             [ "$DIAGRAM_CREATOR" = true ] && picked+=(diagram-creator)
             [ "$IMAGE_CREATOR" = true ] && picked+=(image-creator)
+            [ "$SHAREPOINT" = true ] && picked+=(sharepoint)
           fi
           if [ ${#picked[@]} -eq 0 ]; then echo "No agents selected"; exit 1; fi
           echo "agents=$(printf '%s\n' "${picked[@]}" | jq -R . | jq -sc .)" >> "$GITHUB_OUTPUT"
